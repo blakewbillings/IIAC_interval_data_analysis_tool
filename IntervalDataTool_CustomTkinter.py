@@ -1,7 +1,9 @@
 import customtkinter as tk
-from tkinter import FALSE, TRUE, filedialog
+from tkinter import filedialog
 import pandas as pd
 from pandastable import Table
+from PIL import Image
+
 
 # Some nice things
 # (All font types here = https://stackoverflow.com/questions/39614027/list-available-font-families-in-tkinter)
@@ -10,31 +12,53 @@ from pandastable import Table
 global df
 global table
 global desired_table
-global IsDateTime;
+global Entry_StartRowNum
 desired_table = pd.DataFrame()
-global Frame_TablePage
+global Frame_UploadPage
+global Frame_TitlePage
 
 ## This function opens file explorer for the user to
 ## select the desired excel file to be opened.
-def open_file():
+def open_file(labels_row):
     global df
     global table
-    global Frame_TablePage
+    global Frame_UploadPage
+
     file_path = filedialog.askopenfilename(filetypes=[("XLSX Files", "*.xlsx")])
 
+
     if file_path:
-        # Get the row number for labels
-        #labels_row = int(label_labelsRowEntry.get())
-        labels_row = int(5)
-        
+        #Remove last widget
+        Frame_UploadPage.grid_remove()
+
         # Read the Excel file using pandas
-        #df = pd.read_excel(file_path, sheet_name=0, skiprows=lambda x: x < labels_row - 1)
         df = pd.read_excel(file_path, sheet_name=0, skiprows=lambda x: x < labels_row - 1)
 
+
+
+
+        # Create GUI for Table column selection
+        Frame_ColumnSelector = tk.CTkFrame(app)
+        Frame_ColumnSelector.grid(row=0, column=2, padx=20, pady=(50, 0))
+
+        Label_Title = tk.CTkLabel(Frame_ColumnSelector, text="Column Selection")
+        Label_Title.configure(font=('Eras Bold ITC', 40), anchor='center', pady=30, padx=210)
+        Label_Title.grid(row=0, column=2)
+
         # Create dummy table
-        #table = Table(frame_table, dataframe=df)
-        table = Table(Frame_TablePage, dataframe=df)
+        table = Table(Frame_ColumnSelector, dataframe=df)
+        table.grid(row =1, column = 2)
         table.show()
+        
+    else:
+        print("Crash")
+
+
+def loading_widget():
+    global Frame_UploadPage
+    my_image = tk.CTkImage(dark_image=Image.open('loading.gif'), size=(30, 30))
+    image_label = tk.CTkLabel(Frame_UploadPage, image=my_image, text="")
+    image_label.grid(column=2, row=2)
 
 #def retrieve_column():
 #    global df
@@ -68,30 +92,26 @@ def open_file():
 #            table = Table(window, dataframe=desired_table)
 #            table.show()
 
-def DateTimeBool():
-    global IsDateTime
-    if IsDateTime is FALSE:
-        IsDateTime = TRUE
-    else:
-        IsDateTime = FALSE
-
 def uploadbutton_pressed():
-
-    ### Still working on this method, as well as next steps after this ###
-    global Frame_TablePage
-    Frame_TablePage = tk.CTkFrame(app)
-    Frame_TablePage.grid(row = 0, column = 2, padx=20, pady=(50,0))
     try: 
-        open_file()
+        labels_row = int(Entry_StartRowNum.get())
+        open_file(labels_row)
+
     except:
-        startbutton_pressed
+        ## Window pop-up saying that the entry item is not valid
+        Entry_StartRowNum.delete(0, len(Entry_StartRowNum.get()))
+        Entry_StartRowNum.insert(0, "#ERROR")
 
 def startbutton_pressed():
-    global IsDateTime
-    IsDateTime = TRUE
+    global Entry_StartRowNum
+    global Frame_UploadPage
+    global Frame_TitlePage
     # Frame Initialization
     Frame_UploadPage = tk.CTkFrame(app)
     Frame_UploadPage.grid(row = 0, column=2, padx=20, pady=(50,0))
+
+    #Remove TitlePage Frame
+    Frame_TitlePage.grid_remove()
 
     # Title
     Label_Title = tk.CTkLabel(Frame_UploadPage, text = "Excel Format Setup")
@@ -104,27 +124,24 @@ def startbutton_pressed():
     Label_StartRowNum.grid(row = 3, column = 2, padx=10, pady=0)
     Entry_StartRowNum = tk.CTkEntry(Frame_UploadPage)
     Entry_StartRowNum.grid(row = 4, column=2, padx=10, pady=0)
-    #TODO: Use try-except for when the entry given is not an integer
     Label_Important = tk.CTkLabel(Frame_UploadPage, text = "IMPORTANT: Everything under the Labels will be considered data")
     Label_Important.configure(font=('Eras Medium ITC',10), anchor = 'center', pady=0, padx=30)
     Label_Important.grid(row = 5, column=2, padx=10, pady=2)
     
     # Section where we check if the date and timestamps are combined or not
-    Label_DateTimeCheck = tk.CTkLabel(Frame_UploadPage, text = "Are Dates and Timestamps in the same column?")
-    Label_DateTimeCheck.configure(font=('Eras Medium ITC',15), anchor = 'center', pady=30, padx=30)
-    Label_DateTimeCheck.grid(row = 6, column = 2, padx=10, pady=0)
     check_var = tk.StringVar(value="on")
-    CheckBox_DateTimeCheck = tk.CTkCheckBox(Frame_UploadPage, command=DateTimeBool, text = "Are Dates and Timestamps in the same column?", variable=check_var, onvalue = "on", offvalue = "off")
+    CheckBox_DateTimeCheck = tk.CTkCheckBox(Frame_UploadPage, text = "Are Dates and Timestamps in the same column?", variable=check_var, onvalue = "on", offvalue = "off")
     CheckBox_DateTimeCheck.configure(font=('Eras Medium ITC',15))
-    CheckBox_DateTimeCheck.grid(row = 7, column = 2, padx=10, pady=0)
+    CheckBox_DateTimeCheck.grid(row = 6, column = 2, padx=10, pady=30)
 
     # Button to upload the excel file
     UploadButton_TitlePage = tk.CTkButton(Frame_UploadPage,text="Upload Excel File", command = uploadbutton_pressed)
     UploadButton_TitlePage.configure(font=('Eras Medium ITC',15))
-    UploadButton_TitlePage.grid(row=8,column=2, padx=10, pady=80)
+    UploadButton_TitlePage.grid(row=7,column=2, padx=10, pady=30)
 
 
 def CreateStartingPage():
+    global Frame_TitlePage
     Frame_TitlePage = tk.CTkFrame(app)
     Frame_TitlePage.grid(row = 0, column = 2, padx=10, pady=(100,0))
     Frame_TitleOnlyFrame = tk.CTkFrame(Frame_TitlePage)
@@ -135,13 +152,11 @@ def CreateStartingPage():
     StartButton = tk.CTkButton(Frame_TitlePage,text="Get Started", command = startbutton_pressed)
     StartButton.configure(font=('Eras Medium ITC',15))
     StartButton.grid(row=1,column=2, padx=200, pady=50)
-
 #""" Start of MAIN """
 
 ## Create GUI
 
 tk.set_appearance_mode("dark")
-
 app = tk.CTk()
 app.title("Data Analysis Tool")
 app.geometry("1000x1000")
@@ -150,22 +165,9 @@ app.geometry("1000x1000")
 #app.grid_rowconfigure(2, weight=1)  
 app.grid_columnconfigure(2, weight=1)
 
+# Start GUI program
 CreateStartingPage()
 
-
-## Starting Row for Table
-#label_dataLabels = tk.Label(window, text="Insert Row Number in which Labels for the data are")
-#label_dataLabels.pack()
-#label_dataLabels_2 = tk.Label(window, text="(Everything under the label will be considered data):")
-#label_dataLabels_2.pack()
-
-## Entry Box for Starting Row for Table
-#label_labelsRowEntry = tk.Entry(window)
-#label_labelsRowEntry.pack()
-
-## Add button to select the file from file explorer
-#button = tk.Button(window, text="Open Excel File", command=open_file)
-#button.pack()
 
 ## Create a frame to hold the table
 #frame_table = tk.Frame(window)
