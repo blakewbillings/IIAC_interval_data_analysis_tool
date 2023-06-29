@@ -1,3 +1,5 @@
+from itertools import count
+from typing import Counter
 import customtkinter as tk
 from tkinter import filedialog
 import pandas as pd
@@ -16,14 +18,16 @@ global Entry_StartRowNum
 desired_table = pd.DataFrame()
 global Frame_UploadPage
 global Frame_TitlePage
-
+global counter
+global columnSelectorButton
+counter = 1
 ## This function opens file explorer for the user to
 ## select the desired excel file to be opened.
 def open_file(labels_row):
     global df
     global table
     global Frame_UploadPage
-
+    global columnSelectorButton
     file_path = filedialog.askopenfilename(filetypes=[("XLSX Files", "*.xlsx")])
 
 
@@ -34,24 +38,34 @@ def open_file(labels_row):
         # Read the Excel file using pandas
         df = pd.read_excel(file_path, sheet_name=0, skiprows=lambda x: x < labels_row - 1)
 
-
-
-
         # Create GUI for Table column selection
-        Frame_ColumnSelector = tk.CTkFrame(app)
-        Frame_ColumnSelector.grid(row=0, column=2, padx=20, pady=(50, 0))
-
-        Label_Title = tk.CTkLabel(Frame_ColumnSelector, text="Column Selection")
-        Label_Title.configure(font=('Eras Bold ITC', 40), anchor='center', pady=30, padx=210)
-        Label_Title.grid(row=0, column=2)
-
-        # Create dummy table
-        table = Table(Frame_ColumnSelector, dataframe=df)
-        table.grid(row =1, column = 2)
-        table.show()
+        Frame_ColumnSelectorTitle = tk.CTkFrame(app)
+        Frame_ColumnSelectorTitle.grid(row=0, column=2, padx=20, pady=(50, 0))
         
+
+        # Frame for Title
+        Label_Title = tk.CTkLabel(Frame_ColumnSelectorTitle, text="Column Selection")
+        Label_Title.configure(font=('Eras Bold ITC', 40), anchor='center', padx=20, pady=20)
+        Label_Title.grid(row=0, column=2)
+        
+        # Frame for the Table
+        Frame_Table = tk.CTkFrame(app)
+        Frame_Table.grid(row = 1, column =2 , padx=20, pady=(50,0))
+
+        # Create table
+        table = Table(Frame_Table, dataframe=df)
+        table.show()
+     
+        Frame_ColumnSelectorButtons = tk.CTkFrame(app)
+        Frame_ColumnSelectorButtons.grid(row = 2, column = 2, padx = 20, pady=(50,0))
+
+        ColumnSelectionButton = tk.CTkButton(Frame_ColumnSelectorButtons, text="Select Date Column", command = retrieve_column)
+        ColumnSelectionButton.configure(font=('Eras Medium ITC',15))
+        ColumnSelectionButton.grid(row = 2, column = 2)
+        columnSelectorButton = ColumnSelectionButton
+
     else:
-        print("Crash")
+        print("Could not open the file")
 
 
 def loading_widget():
@@ -60,37 +74,47 @@ def loading_widget():
     image_label = tk.CTkLabel(Frame_UploadPage, image=my_image, text="")
     image_label.grid(column=2, row=2)
 
-#def retrieve_column():
-#    global df
-#    global table
-#    global desired_table
+def retrieve_column():
+    global df
+    global table
+    global desired_table
+    global counter
+    global columnSelectorButton
+    
+    # Change text on button depending on step
+    if counter == 1:
+        columnSelectorButton.configure(text="Select Time Column")
+    if counter == 2:
+        columnSelectorButton.configure(text="Select Power Column")
 
 #    # Get the selected column index
-#    selected_column_index = table.getSelectedColumn()
+    selected_column_index = table.getSelectedColumn()
 
 #    # Check if a column is selected
-#    if selected_column_index is not None:
-#        # Get the column name from the dataframe
-#        column_name = df.columns[selected_column_index]
+    if selected_column_index is not None:
+        # Get the column name from the dataframe
+        column_name = df.columns[selected_column_index]
 
-#        # Retrieve the data from the selected column
-#        column_data = df[column_name]
+        # Retrieve the data from the selected column
+        column_data = df[column_name]
 
-#        # Append the column data to the desired_table DataFrame
-#        desired_table[column_name] = column_data
+        # Append the column data to the desired_table DataFrame
+        desired_table[column_name] = column_data
 
-#        # Print the updated desired_table
-#        print(desired_table)
+        # Print the updated desired_table
+        print(desired_table)
 
-#        # Check if three columns have been added to desired_table
-#        if len(desired_table.columns) == 3:
-#            # Create a new window to display the desired_table
-#            window = tk.Toplevel()
-#            window.title("Desired Table")
+        # Check if three columns have been added to desired_table
+        if len(desired_table.columns) == 3:
+            # Create a new window to display the desired_table
+            toplevel = tk.CTkToplevel(app)  # master argument is optional  
 
-#            # Create the table from desired_table
-#            table = Table(window, dataframe=desired_table)
-#            table.show()
+            # Create the table from desired_table
+            table = Table(toplevel, dataframe=desired_table)
+            table.show()
+
+    # To make button text change
+    counter = counter + 1
 
 def uploadbutton_pressed():
     try: 
@@ -106,6 +130,7 @@ def startbutton_pressed():
     global Entry_StartRowNum
     global Frame_UploadPage
     global Frame_TitlePage
+
     # Frame Initialization
     Frame_UploadPage = tk.CTkFrame(app)
     Frame_UploadPage.grid(row = 0, column=2, padx=20, pady=(50,0))
@@ -161,21 +186,13 @@ app = tk.CTk()
 app.title("Data Analysis Tool")
 app.geometry("1000x1000")
 #app.iconbitmap("ico.ico")
+
+
 # configure grid system
-#app.grid_rowconfigure(2, weight=1)  
 app.grid_columnconfigure(2, weight=1)
 
 # Start GUI program
 CreateStartingPage()
-
-
-## Create a frame to hold the table
-#frame_table = tk.Frame(window)
-#frame_table.pack()
-
-## Add button to retrieve selected column data
-#retrieve_button = tk.Button(window, text="Retrieve Column Data", command=retrieve_column)
-#retrieve_button.pack()
 
 ## Start the GUI
 app.mainloop()
