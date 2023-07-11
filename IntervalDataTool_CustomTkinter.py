@@ -1,11 +1,18 @@
-from itertools import count
-from typing import Counter
+import string
 import customtkinter as tk
 from tkinter import filedialog
 import pandas as pd
 from pandastable import Table
 from PIL import Image
-
+import re
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import pandas as pd
+from datetime import datetime as dt
+##%matplotlib inline
+##%config InlineBackend.figure_format = 'svg'
 
 # Some nice things
 # (All font types here = https://stackoverflow.com/questions/39614027/list-available-font-families-in-tkinter)
@@ -15,12 +22,15 @@ global df
 global table
 global desired_table
 global Entry_StartRowNum
-desired_table = pd.DataFrame()
 global Frame_UploadPage
 global Frame_TitlePage
 global counter
 global columnSelectorButton
+
+# temps
+desired_table = pd.DataFrame()
 counter = 1
+
 ## This function opens file explorer for the user to
 ## select the desired excel file to be opened.
 def open_file(labels_row):
@@ -28,21 +38,26 @@ def open_file(labels_row):
     global table
     global Frame_UploadPage
     global columnSelectorButton
-    file_path = filedialog.askopenfilename(filetypes=[("XLSX Files", "*.xlsx")])
-
+    file_path = filedialog.askopenfilename(filetypes=[("XLSX Files", "*.xlsx"), ("CSV Files", "*.csv")])
+    
+    if file_path.endswith(".csv"):
+        # Convert CSV to Excel
+        excel_file_path = os.path.splitext(file_path)[0] + ".xlsx"
+        data_frame = pd.read_csv(file_path)
+        data_frame.to_excel(excel_file_path, index=False)
+        file_path = excel_file_path  # Update file_path with the Excel file path
 
     if file_path:
         #Remove last widget
         Frame_UploadPage.grid_remove()
 
         # Read the Excel file using pandas
-        df = pd.read_excel(file_path, sheet_name=0, skiprows=lambda x: x < labels_row - 1)
+        df = pd.read_excel(file_path, sheet_name=0, skiprows = lambda x: x < labels_row - 1)
 
         # Create GUI for Table column selection
         Frame_ColumnSelectorTitle = tk.CTkFrame(app)
         Frame_ColumnSelectorTitle.grid(row=0, column=2, padx=20, pady=(50, 0))
         
-
         # Frame for Title
         Label_Title = tk.CTkLabel(Frame_ColumnSelectorTitle, text="Column Selection")
         Label_Title.configure(font=('Eras Bold ITC', 40), anchor='center', padx=20, pady=20)
@@ -67,13 +82,6 @@ def open_file(labels_row):
     else:
         print("Could not open the file")
 
-
-def loading_widget():
-    global Frame_UploadPage
-    my_image = tk.CTkImage(dark_image=Image.open('loading.gif'), size=(30, 30))
-    image_label = tk.CTkLabel(Frame_UploadPage, image=my_image, text="")
-    image_label.grid(column=2, row=2)
-
 def retrieve_column():
     global df
     global table
@@ -97,24 +105,150 @@ def retrieve_column():
 
         # Retrieve the data from the selected column
         column_data = df[column_name]
-
+        
         # Append the column data to the desired_table DataFrame
         desired_table[column_name] = column_data
-
-        # Print the updated desired_table
-        print(desired_table)
+        
+        if counter == 1:
+            desired_table = desired_table.rename(columns={column_name: 'Date/Time'})
+        if counter == 2:
+            desired_table = desired_table.rename(columns={column_name: 'temp'})
 
         # Check if three columns have been added to desired_table
         if len(desired_table.columns) == 3:
-            # Create a new window to display the desired_table
-            toplevel = tk.CTkToplevel(app)  # master argument is optional  
+            # 
+            desired_table = desired_table.rename(columns={column_name: 'Power (kW)'})
 
-            # Create the table from desired_table
-            table = Table(toplevel, dataframe=desired_table)
-            table.show()
+            # Combine Date/Time content and temp
+            # Use separate method
+            
+            # Cast as string
+            desired_table['Date/Time'] = desired_table['Date/Time'].astype(str)
+            desired_table['temp'] = desired_table['temp'].astype(str)
+
+            # Format accordingly
+            desired_table['Date/Time'] = desired_table['Date/Time'].apply(regexAndReturn_Date)
+            desired_table['temp'] = desired_table['temp'].apply(regexAndReturn_TimeStamp)
+
+            # Combine 'Date/Time' and 'temp' columns
+            desired_table['Date/Time'] = desired_table['Date/Time'] + ' ' + desired_table['temp']
+
+            # Delete 'temp' column
+            desired_table = desired_table.drop('temp', axis=1)        
+            
+            analyzeAndGraph()
+
 
     # To make button text change
     counter = counter + 1
+
+
+def regexAndReturn_Date(current_date):
+    pattern = r"^(\d{4})([-/])(\d{2})\2(\d{2})"
+
+    match = re.match(pattern, current_date[:10])
+    if match:
+        day = match.group(1)
+        month = match.group(3)
+        year = match.group(4)
+        return f"{day}-{month}-{year}"
+    
+    return "ERROR"
+
+def regexAndReturn_TimeStamp(time):
+    time_length = len(time)
+    
+    if time_length == 1:
+        time = f"00:0{time}"
+    elif time_length == 2:
+        time = f"00:{time}"
+    elif time_length == 3:
+        time = f"0{time[0]}:{time[1:]}"
+    elif time_length == 4:
+        time = f"{time[0]}{time[1]}:{time[2]}{time[3]}"
+    
+    pattern = r"^(\d{1,4})([:/-])(\d{2})$"
+    
+    match = re.match(pattern, time)
+    
+    if match:
+        hour = match.group(1)
+        separator = match.group(2)
+        minute = match.group(3)
+        return f"{hour}:{minute}"
+    
+    return "ERROR"
+
+def analyzeAndGraph():
+    # Create a new window to display the desired_table
+    toplevel = tk.CTkToplevel(app)
+
+    # Create the table from desired_table
+    table = Table(toplevel, dataframe = desired_table)
+    table.show()
+
+    dailyProfile
+    dailyMaxMin
+
+
+def dailyProfile():
+    time_diff = desired_table.index[1].minute-desired_table.index[0].minute
+
+    interval = 24*7*(60/time_diff)
+
+    months = desired_table.index.month.max()
+
+    data = []
+
+    for i in range(months):
+        md = desired_table[desired_table.index.month == i+1]
+        mdi = md.index
+
+        for j in range(int(interval)):
+            time = mdi[j].time()
+            month = mdi[j].month
+            day_of_week = mdi[j].weekday() + 1
+            kW = np.mean(md['Power (kW)'].iloc[j::int(interval)])
+
+            #uncomment to print values        
+            print(f"Time: {time}, Month: {month}, Day of Week: {day_of_week}, kW: {kW}")
+
+            data.append([time, month, day_of_week, kW])
+
+    daily_profile = pd.DataFrame(data, columns=['Time', 'Month', 'Day of Week', 'kW'])
+    dp = daily_profile
+
+
+
+def dailyMaxMin():
+    results = []
+
+    for day in pd.date_range(start=desired_table.index.min().date(), end=desired_table.index.max().date(), freq='D'):
+        daily_data = desired_table[desired_table.index.date == day.date()]
+
+        if len(daily_data) > 0:
+            max_value = daily_data['Power (kW)'].max()
+            max_time = daily_data.loc[daily_data['Power (kW)'].idxmax()].name.time()
+            min_value = daily_data['Power (kW)'].min()
+            min_time = daily_data.loc[daily_data['Power (kW)'].idxmin()].name.time()
+            results.append({'Date': day.date(), 'MaxValue': max_value, 'MaxTime': max_time, 'MinValue': min_value, 'MinTime': min_time})
+
+    daily_max_min = pd.concat([pd.DataFrame(result, index=[0]) for result in results], ignore_index=True)
+    mm = daily_max_min
+
+    #uncomment to print values
+    print(daily_max_min)
+
+
+def analyzeDF(toplevel):
+    TimeColumn = desired_table.iloc[:,0]
+    TimeStampColumn = desired_table.iloc[:, 1];
+    print(TimeColumn)
+    print(TimeStampColumn)
+    
+    TimeStampColumn = pd.to_datetime(TimeStampColumn)
+    TimeColumn = pd.to_datetime(TimeColumn).dt.tz_localize(None)
+    desired_table.set_index(TimeStampColumn,inplace = True)
 
 def uploadbutton_pressed():
     try: 
@@ -185,7 +319,6 @@ tk.set_appearance_mode("dark")
 app = tk.CTk()
 app.title("Data Analysis Tool")
 app.geometry("1000x1000")
-#app.iconbitmap("ico.ico")
 
 
 # configure grid system
