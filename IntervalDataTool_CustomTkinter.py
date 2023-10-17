@@ -228,13 +228,14 @@ def retrieve_3_columns():
 
 def remove_words_from_time(time):
     # Regular expression pattern to match valid substrings
-    pattern = r"(AM|am|PM|pm|\d+|:|-|/|\s+)"
-
+    # pattern = r"AM|am|PM|pm|\d+|:|-|/|\s+"
+    modified_string = re.sub(r'[^0-9\s!"#$%&\'()*+,-./;:<=>?@[\\]^_`{}~]|(?=AM|PM)', '', time)
+    modified_string = re.sub(r'(\d) (?=AM|PM)', r'\1', time)
     # Find all valid substrings in the string
-    valid_substrings = re.findall(pattern, time)
+    #valid_substrings = re.findall(pattern, time)
 
     # Join the valid substrings to form the modified string
-    modified_string = "".join(valid_substrings).strip()
+    #modified_string = "".join(valid_substrings).strip()
 
     return modified_string
 
@@ -306,17 +307,8 @@ def special_regexAndReturn_Date(current_date):
             year = match.group(1)
             return f"{day}-{month}-{year}"
         
-def regexAndReturn_TimeStamp(time):
-    # Remove unwanted spaces/words
-    time = remove_words_from_time(time)
-    time = time.replace(" ", "")
-    hasPM = "no"
-    if "AM" in time:
-        time = time.replace("AM", "")
-    elif "PM" in time:
-        time = time.replace("PM" "")
-        hasPM = "yes"
-    time = re.sub(r"[:\-/]", "", time)
+
+def fixTimeWithNoDoubleDot(time):
     time_length = len(time)
 
     if time_length == 1:
@@ -326,39 +318,63 @@ def regexAndReturn_TimeStamp(time):
     elif time_length == 3:
         time = f"0{time[0]}:{time[1]}{time[2]}:00"
     elif time_length == 4:
-        hour = f"{time[0]}{time[1]}"
-        minute = f"{time[2]}{time[3]}"
-        second = f"00"
+        time = f"{time[0]}{time[1]}:{time[2]}{time[3]}:00"
 
-        if hasPM == "yes" and hour != "12":
-            hour = int(hour) + 12
-            hour = str(hour)
-            time = f"{hour}:{minute}:{second}"
-        else:
-            time = f"{hour}:{minute}:{second}"
+    elif time_length == 5:
+        time = f"0{time[0]}:{time[1]}{time[2]}:{time[3]}{time[4]}"
+
     elif time_length == 6:
-        hour = f"{time[0]}{time[1]}"
-        minute = f"{time[2]}{time[3]}"
-        second = f"{time[4]}{time[5]}"
+        time = f"{time[0]}{time[1]}:{time[2]}{time[3]}:{time[4]}{time[5]}"
+    
+    return time
 
-        if hasPM == "yes":
-            hour = int(hour) + 12
-            hour = str(hour)
 
-        time = f"{hour}:{minute}:{second}"
+def regexAndReturn_TimeStamp(time):
+    # Remove unwanted spaces/words
+    time = time.replace(" ", "")
+    hasPM = "no"
+    hasAM = "no"
+    hour = "-1"
+    minute = "-1"
+    second = "-1"
 
-    pattern = r"^(\d{2}):(\d{2}):(\d{2})$"
-    match = re.match(pattern, time)
+    if "AM" in time:
+        time = time.replace("AM", "")
+        hasAM = "yes"
+    elif "PM" in time:
+        time = time.replace("PM", "")
+        hasPM = "yes"
 
-    if match:
-        hour = match.group(1)
-        minute = match.group(2)
-        second = match.group(3)
-        return f"{hour}:{minute}:{second}"
-    return f"ERROR"
+    # For cases like 0015
+    if (time.count(':') == 0):
+        time = fixTimeWithNoDoubleDot(time)
+
+    if (time.count(':') == 1):
+        hour, minute = time.split(':')
+        second = "00"
+    elif (time.count(':') == 2):
+        hour, minute, second = time.split(':')
+    
+    if len(hour) == 1:
+        hour = f"0{hour}"
+
+    if (hasPM == "yes" and hour != "12"):
+        hour = int(hour) + 12
+        hour = str(hour)
+    elif (hasAM == "yes" and hour == "12"):
+        hour = "00"
+    
+    time = f"{hour}:{minute}:{second}"
+    
+    if (len(time) != 8):
+        return f"ERROR"
+
+    return time
+
 
 def regexAndReturn_DateTime(DateTime):
     DateTime = remove_words_from_time(DateTime)
+    print(DateTime)
     date, time = DateTime.split()
     date = regexAndReturn_Date(date)
     time = regexAndReturn_TimeStamp(time)
