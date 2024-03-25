@@ -99,7 +99,7 @@ class Grapher:
                     upper.append(u)
                     lower.append(l)
         # -----------------------------------------------
-
+        
 
         time = np.linspace(0, len(upper), len(upper))   #an array for the x axis
         tix = np.linspace(0, len(upper), self.monthNum+1)   #an array for the tickmarks
@@ -200,7 +200,7 @@ class Grapher:
         plt.xticks(ticks = tix, labels = self.dailyTitles, visible = False)
         plt.gca().set_xticks(ticks = tix + len(upper)/14, minor = True)
         plt.gca().set_xticklabels(self.dailyTitles, minor=True)
-        plt.tick_params(axis = 'x', which = 'minor', size = 0)
+        plt.tick_params(axis = 'x', which = 'minor', size = 0) #test comment
 
         plt.ylabel('Power (kW)', size = 12)
         plt.xlabel('Day of Week', size = 12)
