@@ -19,6 +19,8 @@ class FileOpener:
 
             # Read the Excel file using pandas
             df = pd.read_excel(filePath, sheet_name=0, dtype=str, skiprows=lambda x: x < startRow - 1, nrows=endRow - startRow)
+            df = df.fillna(method='ffill')
+            
             return df
 
         raise ValueError("File path is empty or invalid")
