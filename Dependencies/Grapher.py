@@ -29,8 +29,7 @@ class Grapher:
         self.commas = ticker.StrMethodFormatter('{x:,.0f}')
 
     def graphAll(self):
-        self.graphYearlyMaxMin()
-        self.Graph_YearlyMaxMin()
+#        self.Graph_YearlyMaxMin()
         self.Graph_DayOfWeekMaxMin()
         self.Graph_MonthlyKwUsageByTimeOfDay()  
         self.Graph_MonthlyKwUsageByDayOfWeek()
@@ -38,52 +37,52 @@ class Grapher:
         self.Graph_HistogramOfPeaksByKwValues()
         self.Graph_MonthlyKwPeakProfile()
             
-    def graphYearlyMaxMin(self):
-        upper = []
-        lower = []
-        if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):
-            for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):
-                if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
-                    upper.append(u)
-                    lower.append(l)
-        else:
-            for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):
-                if l >= np.mean(self.maxMinDF['MinValue'])*self.cutoffFactor:
-                    upper.append(u)
-                    lower.append(l)
-        # -----------------------------------------------
-        time = np.linspace(0, len(upper), len(upper))                                                   # An array for the x axis
-        tix = np.linspace(0, len(upper), self.monthNum+1)                                                    # An array for the tickmarks
-        plt.figure(figsize=(8, 4))
+    # def graphYearlyMaxMin(self):
+    #     upper = []
+    #     lower = []
+    #     if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):
+    #         for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):
+    #             if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
+    #                 upper.append(u)
+    #                 lower.append(l)
+    #     else:
+    #         for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):
+    #             if l >= np.mean(self.maxMinDF['MinValue'])*self.cutoffFactor:
+    #                 upper.append(u)
+    #                 lower.append(l)
+    #     # -----------------------------------------------
+    #     time = np.linspace(0, len(upper), len(upper))                                                   # An array for the x axis
+    #     tix = np.linspace(0, len(upper), self.monthNum+1)                                                    # An array for the tickmarks
+    #     plt.figure(figsize=(8, 4))
 
-        plt.plot(time, upper, '.', color = 'cornflowerblue', markersize = '3', label = 'upper value')   # Plotting markers for the upper and lower values
-        plt.plot(time, lower, '.', color = 'lightcoral', markersize = '3', label = 'lower value')
+    #     plt.plot(time, upper, '.', color = 'cornflowerblue', markersize = '3', label = 'upper value')   # Plotting markers for the upper and lower values
+    #     plt.plot(time, lower, '.', color = 'lightcoral', markersize = '3', label = 'lower value')
 
 
-        # This plots the lines of best fit
-        #----------------------------------------------------------------
-        upcoefs = np.polyfit(time, upper, deg = 5)
-        lowcoefs = np.polyfit(time, lower, deg = 5)
+    #     # This plots the lines of best fit
+    #     #----------------------------------------------------------------
+    #     upcoefs = np.polyfit(time, upper, deg = 5)
+    #     lowcoefs = np.polyfit(time, lower, deg = 5)
 
-        upline = np.polyval(upcoefs, time)
-        lowline = np.polyval(lowcoefs, time)
+    #     upline = np.polyval(upcoefs, time)
+    #     lowline = np.polyval(lowcoefs, time)
 
-        plt.plot(time, upline, color = 'tab:blue', linewidth = '2')
-        plt.plot(time, lowline, color = 'firebrick', linewidth = '2')
-        #-----------------------------------------------------------------
+    #     plt.plot(time, upline, color = 'tab:blue', linewidth = '2')
+    #     plt.plot(time, lowline, color = 'firebrick', linewidth = '2')
+    #     #-----------------------------------------------------------------
 
-        plt.fill_between(time, upper, upline,color = 'tab:blue', alpha = 0.2)
-        plt.fill_between(time, lower, lowline, color = 'firebrick', alpha = 0.2)
+    #     plt.fill_between(time, upper, upline,color = 'tab:blue', alpha = 0.2)
+    #     plt.fill_between(time, lower, lowline, color = 'firebrick', alpha = 0.2)
 
-        plt.xlabel('Month', size = 12)                                                                  # X Label
-        plt.ylabel('Power (kW)', size = 12)                                                             # Y Label
-        plt.xticks(ticks = tix, visible = False)                                                        # Hiding the x axis ticks
-        plt.gca().set_xticks(ticks = tix + len(upper)/self.monthNum/2, minor=True)                           # Naming the x ticks and putting them in the middle
-        plt.gca().set_xticklabels(self.monthTitles, minor=True)
-        plt.tick_params(axis = 'x', which = 'minor', size = 0)
-        plt.gca().yaxis.set_major_formatter(self.commas)                                                     # Adding commas to the y axis values
-        plt.grid()                                                                                      # Grid
-        plt.savefig('Max_Min_kW_For_The_Year.png')                                                      # Saves a figure into the same folder as this ipynb
+    #     plt.xlabel('Month', size = 12)                                                                  # X Label
+    #     plt.ylabel('Power (kW)', size = 12)                                                             # Y Label
+    #     plt.xticks(ticks = tix, visible = False)                                                        # Hiding the x axis ticks
+    #     plt.gca().set_xticks(ticks = tix + len(upper)/self.monthNum/2, minor=True)                           # Naming the x ticks and putting them in the middle
+    #     plt.gca().set_xticklabels(self.monthTitles, minor=True)
+    #     plt.tick_params(axis = 'x', which = 'minor', size = 0)
+    #     plt.gca().yaxis.set_major_formatter(self.commas)                                                     # Adding commas to the y axis values
+    #     plt.grid()                                                                                      # Grid
+    #     plt.savefig('Max_Min_kW_For_The_Year.png')                                                      # Saves a figure into the same folder as this ipynb
 
     def Graph_YearlyMaxMin(self):
         upper = []
