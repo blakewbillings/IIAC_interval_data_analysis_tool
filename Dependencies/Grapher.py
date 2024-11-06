@@ -85,6 +85,15 @@ class Grapher:
     #     plt.savefig('Max_Min_kW_For_The_Year.png')                                                      # Saves a figure into the same folder as this ipynb
 
     def Graph_YearlyMaxMin(self):
+        """
+            This method ... .
+            
+            Args:
+                param1 (<type>): The first parameter.
+            
+            Returns:
+                png: <what it returns>
+        """
         upper = []
         lower = []
         if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):
