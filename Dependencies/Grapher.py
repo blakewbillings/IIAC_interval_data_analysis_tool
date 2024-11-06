@@ -86,13 +86,14 @@ class Grapher:
 
     def Graph_YearlyMaxMin(self):
         """
-            This method ... .
+            This method ... . describe creates a graph that shows yearly max min
+            uguyjgjgk
             
             Args:
-                param1 (<type>): The first parameter.
+                self (<Grapher>): itself
             
             Returns:
-                png: <what it returns>
+                png: returns the chart/graph as a png image
         """
         upper = []
         lower = []
