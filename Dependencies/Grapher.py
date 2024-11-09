@@ -13,8 +13,22 @@ class Grapher:
         self.monthNum = len(self.whichMonths) #How many different months there are
         self.timeInterval = (desiredTable['Date/Time'][1] - desiredTable['Date/Time'][0]).total_seconds()/60 # difference between timestamps in minutes
 
-        # Graph Formatting
+
+        """
+        Note: When Thomas and I presented this, I received some feedback to fix the y axis bounds, 
+        and to involve a rolling average line instead of a line of best fit. I updated my code in 
+        Jupyter notebook, but not in here. I'm not sure what I need to do to transpose the code I wrote
+        in Jupyter to make it work in Visual Studio. 
+              
+        I updated the section below with 'rolling average window'
+        """
+        # Cutoff factor and rolling average window
         self.cutoffFactor = 0   #this number is the cutoff factor, 0.0 will give you all the data, 1.0 will give you only the values higher than the mean, 0.5 will only give you values higher than 50% of the mean
+        self.window = 10        # sets how many points of data the rolling average is based off of
+        self.magnitude = 10**np.floor(np.log10(np.mean(dailyProfileDF['kW'])))      #will decide the magnitude of the data based on the mean. Outputs 1, 10, 100, 1000, etc.
+        self.ylow = np.floor(np.min(dailyProfileDF['kW'])/self.magnitude)*self.magnitude      #creates high and low bounds for the y axis
+        self.yhigh = np.ceil(np.max(dailyProfileDF['kW'])/self.magnitude)*self.magnitude
+
 
         #all the month/day/time titles
         self.mdict = {1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun', 7:'Jul', 8:'Aug', 9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
@@ -86,15 +100,25 @@ class Grapher:
 
     def Graph_YearlyMaxMin(self):
         """
-            This method ... . describe creates a graph that shows yearly max min
-            uguyjgjgk
+            This method creates a graph that shows the max/min throughout the year. The x axis has 
+            each day throughout the course of a year, labeled by month. The y axis has the max and 
+            min kW value for each day, and there is a rolling average line for both the max and the min
             
             Args:
                 self (<Grapher>): itself
             
             Returns:
-                png: returns the chart/graph as a png image
+                png: returns the graph as a png image
         """
+        
+
+        """
+        area below will select which set (MaxValue or MinValue) has a higher 
+        standard deviation. Then it will plot the data based on which one has the higher 
+        std, this is because of the cutoff factor. If the cutoff factor is active, then 
+        the upper/lower arrays will be created based on the one with more outliers
+        """
+        #---------------------------------------------
         upper = []
         lower = []
         if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):
@@ -119,16 +143,18 @@ class Grapher:
         plt.plot(time, lower, '.', color = 'lightcoral', markersize = '3', label = 'lower value')
 
 
-        #this plots the lines of best fit
+        #area below plots the rolling average
         #----------------------------------------------------------------
-        upcoefs = np.polyfit(time, upper, deg = 5)
-        lowcoefs = np.polyfit(time, lower, deg = 5)
+        
+        upline = np.convolve(upper, np.ones(window)/window, mode = 'valid')            # this line creates the rolling average line, but it is missing the first 20 data points
+        upline = np.concatenate(( [np.mean(upper[:window-1])] * (window-1), upline))    # to fill the first 20 data points, just take the average of the first points and concatenate it to the beginning of the rolling average line
 
-        upline = np.polyval(upcoefs, time)
-        lowline = np.polyval(lowcoefs, time)
+        lowline = np.convolve(lower, np.ones(window)/window, mode = 'valid')             #same thing for the lower line
+        lowline = np.concatenate(([np.mean(lower[:window-1])] * (window-1), lowline))
 
-        plt.plot(time, upline, color = 'tab:blue', linewidth = '2')
-        plt.plot(time, lowline, color = 'firebrick', linewidth = '2')
+        plt.plot(time, upline, color = main_color1, linewidth = '2')                      # this plots the rolling average lines
+plt.plot(time, lowline, color = second_color1, linewidth = '2')
+
         #-----------------------------------------------------------------
 
 
