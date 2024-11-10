@@ -22,11 +22,11 @@ class Grapher:
               
         I updated the section below with 'rolling average window'
         """
-        # Cutoff factor and rolling average window
+        # Miscellaneous parameters
         self.cutoffFactor = 0   #this number is the cutoff factor, 0.0 will give you all the data, 1.0 will give you only the values higher than the mean, 0.5 will only give you values higher than 50% of the mean
         self.window = 10        # sets how many points of data the rolling average is based off of
         self.magnitude = 10**np.floor(np.log10(np.mean(dailyProfileDF['kW'])))      #will decide the magnitude of the data based on the mean. Outputs 1, 10, 100, 1000, etc.
-        self.ylow = np.floor(np.min(dailyProfileDF['kW'])/self.magnitude)*self.magnitude      #creates high and low bounds for the y axis
+        self.ylow = np.floor(np.min(dailyProfileDF['kW'])/self.magnitude)*self.magnitude      #creates high and low bounds for the y axis based on the magnitude of the data
         self.yhigh = np.ceil(np.max(dailyProfileDF['kW'])/self.magnitude)*self.magnitude
 
 
@@ -41,6 +41,12 @@ class Grapher:
 
         #a way to add commas to axis values in the thousands 
         self.commas = ticker.StrMethodFormatter('{x:,.0f}')
+        
+        #choosing the colors for the graphs
+        self.main_color1 = 'tab:blue'
+        self.main_color2 = 'cornflowerblue'
+        self.second_color1 = 'firebrick'
+        self.second_color2 = 'lightcoral'
 
     def graphAll(self):
 #        self.Graph_YearlyMaxMin()
@@ -50,7 +56,12 @@ class Grapher:
         self.Graph_HistogramOfPeaksByTimeOfDay()
         self.Graph_HistogramOfPeaksByKwValues()
         self.Graph_MonthlyKwPeakProfile()
-            
+        
+
+        #DUPLICATED CODE
+    """      
+      #THIS AREA OF CODE WAS DUPLICATED, NOT SURE WHY. KEEPING IT HERE JUST IN CASE
+      
     # def graphYearlyMaxMin(self):
     #     upper = []
     #     lower = []
@@ -69,8 +80,8 @@ class Grapher:
     #     tix = np.linspace(0, len(upper), self.monthNum+1)                                                    # An array for the tickmarks
     #     plt.figure(figsize=(8, 4))
 
-    #     plt.plot(time, upper, '.', color = 'cornflowerblue', markersize = '3', label = 'upper value')   # Plotting markers for the upper and lower values
-    #     plt.plot(time, lower, '.', color = 'lightcoral', markersize = '3', label = 'lower value')
+    #     plt.plot(time, upper, '.', color = self.main_color2, markersize = '3', label = 'upper value')   # Plotting markers for the upper and lower values
+    #     plt.plot(time, lower, '.', color = self.second_color2, markersize = '3', label = 'lower value')
 
 
     #     # This plots the lines of best fit
@@ -81,12 +92,12 @@ class Grapher:
     #     upline = np.polyval(upcoefs, time)
     #     lowline = np.polyval(lowcoefs, time)
 
-    #     plt.plot(time, upline, color = 'tab:blue', linewidth = '2')
+    #     plt.plot(time, upline, color = self.main_color1, linewidth = '2')
     #     plt.plot(time, lowline, color = 'firebrick', linewidth = '2')
     #     #-----------------------------------------------------------------
 
-    #     plt.fill_between(time, upper, upline,color = 'tab:blue', alpha = 0.2)
-    #     plt.fill_between(time, lower, lowline, color = 'firebrick', alpha = 0.2)
+    #     plt.fill_between(time, upper, upline,color = self.main_color1, alpha = 0.2)
+    #     plt.fill_between(time, lower, lowline, color = 'self.second_color1', alpha = 0.2)
 
     #     plt.xlabel('Month', size = 12)                                                                  # X Label
     #     plt.ylabel('Power (kW)', size = 12)                                                             # Y Label
@@ -97,7 +108,8 @@ class Grapher:
     #     plt.gca().yaxis.set_major_formatter(self.commas)                                                     # Adding commas to the y axis values
     #     plt.grid()                                                                                      # Grid
     #     plt.savefig('Max_Min_kW_For_The_Year.png')                                                      # Saves a figure into the same folder as this ipynb
-
+    """
+    
     def Graph_YearlyMaxMin(self):
         """
             This method creates a graph that shows the max/min throughout the year. The x axis has 
@@ -113,12 +125,13 @@ class Grapher:
         
 
         """
-        area below will select which set (MaxValue or MinValue) has a higher 
+        The area below will select which set (MaxValue or MinValue) has a higher 
         standard deviation. Then it will plot the data based on which one has the higher 
         std, this is because of the cutoff factor. If the cutoff factor is active, then 
         the upper/lower arrays will be created based on the one with more outliers
         """
         #---------------------------------------------
+        #EXCLUDING OUTLIERS
         upper = []
         lower = []
         if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):
@@ -132,34 +145,35 @@ class Grapher:
                     upper.append(u)
                     lower.append(l)
         # -----------------------------------------------
-        
+        #PLOTTING ACTUAL VALUES
 
         time = np.linspace(0, len(upper), len(upper))   #an array for the x axis
         tix = np.linspace(0, len(upper), self.monthNum+1)   #an array for the tickmarks
 
         plt.figure(figsize=(8, 4))
 
-        plt.plot(time, upper, '.', color = 'cornflowerblue', markersize = '3', label = 'upper value') #plotting markers for the upper and lower values
-        plt.plot(time, lower, '.', color = 'lightcoral', markersize = '3', label = 'lower value')
+        plt.plot(time, upper, '.', color = self.main_color2, markersize = '3', label = 'upper value') #plotting markers for the upper and lower values
+        plt.plot(time, lower, '.', color = self.second_color2, markersize = '3', label = 'lower value')
 
 
-        #area below plots the rolling average
-        #----------------------------------------------------------------
         
-        upline = np.convolve(upper, np.ones(window)/window, mode = 'valid')            # this line creates the rolling average line, but it is missing the first 20 data points
-        upline = np.concatenate(( [np.mean(upper[:window-1])] * (window-1), upline))    # to fill the first 20 data points, just take the average of the first points and concatenate it to the beginning of the rolling average line
+        #----------------------------------------------------------------
+        #ROLLING AVERAGE    
 
-        lowline = np.convolve(lower, np.ones(window)/window, mode = 'valid')             #same thing for the lower line
-        lowline = np.concatenate(([np.mean(lower[:window-1])] * (window-1), lowline))
+        upline = np.convolve(upper, np.ones(self.window)/self.window, mode = 'valid')            # this line creates the rolling average line, but it is missing the first 10 data points 
+        upline = np.concatenate(( [np.mean(upper[:self.window-1])] * (self.window-1), upline))    # to fill the first 10 data points, just take the average of the first 10 points and concatenate it to the beginning of the rolling average line
 
-        plt.plot(time, upline, color = main_color1, linewidth = '2')                      # this plots the rolling average lines
-plt.plot(time, lowline, color = second_color1, linewidth = '2')
+        lowline = np.convolve(lower, np.ones(self.window)/self.window, mode = 'valid')             #same thing for the lower line
+        lowline = np.concatenate(([np.mean(lower[:self.window-1])] * (self.window-1), lowline))
+
+        plt.plot(time, upline, color = self.main_color1, linewidth = '2')                      # this plots the rolling average lines
+        plt.plot(time, lowline, color = self.second_color1, linewidth = '2')
 
         #-----------------------------------------------------------------
+        #MAKING GRAPH LOOK PRETTY
 
-
-        plt.fill_between(time, upper, upline,color = 'tab:blue', alpha = 0.2)
-        plt.fill_between(time, lower, lowline, color = 'firebrick', alpha = 0.2)
+        plt.fill_between(time, upper, upline,color = self.main_color1, alpha = 0.2)       #coloring in the area between the rolling average line and datapoints
+        plt.fill_between(time, lower, lowline, color = self.second_color1, alpha = 0.2)
 
         plt.xlabel('Month', size = 12)                                            #x label
         plt.ylabel('Power (kW)', size = 12)                                       #y label
@@ -170,86 +184,105 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
         plt.gca().yaxis.set_major_formatter(self.commas)                    #adding commas to the y axis values
         plt.grid()                                                     #grid
 
-        plt.savefig('Max_Min_kW_For_The_Year.png')     #saves a figure into the same folder as this ipynb
+        plt.savefig('Max_Min_kW_For_The_Year.png')      #saves the figure into the same folder as this code
 
     def Graph_DayOfWeekMaxMin(self):
-        self.maxMinDF['dayofweek'] = pd.to_datetime(self.maxMinDF['Date']).dt.dayofweek
-        self.maxMinDF = self.maxMinDF.sort_values(['dayofweek', 'Date'])
+        """
+            This method creates a graph that shows the max/min throughout a week. 
+            Plots each max/min value that happened for each day. 
+            For example: It will look at every tuesday in the year and plot the max/min kw for each of those Tuesdays.
+            It does this for each day of the week. There is also a rolling average line.
+            
+            Args:
+                self (<Grapher>): itself
+            
+            Returns:
+                png: returns the graph as a png image
+        """
+        self.maxMinDF['dayofweek'] = pd.to_datetime(self.maxMinDF['Date']).dt.dayofweek  #creates a new column in the dataframe for what day of the week it is
+        self.maxMinDF = self.maxMinDF.sort_values(['dayofweek', 'Date'])                 #sorts the dataframe by 1: day of week, and 2: date
 
-        #---------------------------------------
+        """
+        The area below will select which set (MaxValue or MinValue) has a higher standard deviation. 
+        Then it will plot the data based on which one has the higher std, this is because of the cutoff factor. 
+        If the cutoff factor is active, then I want to create the upper/lower based on the one with more outliers
+        """
+        #--------------------------------------
+        #EXCLUDING OUTLIERS
         upper = []
         lower = []
-        wknd = []
-        wkdy = []
-        if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):
-            for u, l, d in zip(self.maxMinDF['MaxValue'], self.maxMinDF['MinValue'], self.maxMinDF['dayofweek']):
-                if d >= 5 or u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
+
+        if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):             #the if and else will select which set (MaxValue or MinValue) has a higher standard deviation. Then it will plot the data based on which one has the higher std, this is because of the cutoff factor. If the cutoff factor is active, then I want to create the upper/lower based on the one with more outliers
+            for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):              #this goes through the data sets and find the min/max value and puts them in a new array named upper / lower
+                if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoff_factor:
                     upper.append(u)
                     lower.append(l)
-                    if d >= 5:
-                        wknd.append(u)
-                    else:
-                        wkdy.append(u)
         else:
-            for u, l, d in zip(self.maxMinDF['MaxValue'], self.maxMinDF['MinValue'], self.maxMinDF['dayofweek']):
-                if l >= np.mean(self.maxMinDF['MinValue'])*self.cutoffFactor:
+            for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):
+                if l >= np.mean(self.maxMinDF['MinValue'])*self.cutoff_factor:
                     upper.append(u)
                     lower.append(l)
-                    if d >= 5:
-                        wknd.append(u)
-                    else:
-                        wkdy.append(u)
-        #---------------------------------------
 
-        time = np.linspace(0, len(upper), len(upper))
-        wkdy_time = np.linspace(0, len(wkdy), len(wkdy))
-        wknd_time = np.linspace(0, len(wknd), len(wknd))
-
-        tix = np.linspace(0, len(upper), 8)
-
-        wknd_coefs = np.polyfit(wknd_time, wknd, deg = 3)
-        wkdy_coefs = np.polyfit(wkdy_time, wkdy, deg = 4)
-        lowcoefs = np.polyfit(time, lower, deg = 5)
-
-        wknd_mean = np.polyval(wknd_coefs, wknd_time)
-        wkdy_mean = np.polyval(wkdy_coefs, wkdy_time)
-        lmean = np.polyval(lowcoefs, time)
-
-        wknd_time = wknd_time + np.max(wkdy_time)
+        #--------------------------------------         
+        #PLOTTING ACTUAL VALUES 
 
         plt.figure(figsize=(8, 4))
+        time = np.linspace(0, len(upper), len(upper))          #creates the x axis
+        tix = np.linspace(0, len(upper), 8)                    #creates spaces on the x axis to label it by days of the week
 
-        plt.plot(wknd_time, wknd_mean, color = 'tab:blue', linewidth = '2')
-        plt.plot(wkdy_time, wkdy_mean, color = 'tab:blue', linewidth = '2')
-        plt.plot(time, lmean, color = 'firebrick', linewidth = '2')
+        plt.plot(time, upper, '.', color = self.main_color2, markersize = '3', label = 'upper value')               #plots the x and y values
+        plt.plot(time, lower, '.', color = self.second_color2, markersize = '3', label = 'lower value', zorder = 0)
 
-        plt.plot([wkdy_time[-1], wknd_time[0]], [wkdy_mean[-1], wknd_mean[0]], '--', color='tab:blue')
+        #----------------------------------------------
+        #ROLLING AVERAGE LINE
 
-        plt.fill_between(wkdy_time, upper[:len(wkdy)], wkdy_mean, color = 'tab:blue', alpha = 0.2)
-        plt.fill_between(wknd_time, upper[len(wkdy):], wknd_mean, color = 'tab:blue', alpha = 0.2)
-        plt.fill_between(time, lower, lmean, color = 'firebrick', alpha = 0.2)
+        upline = np.convolve(upper, np.ones(self.window)/self.window, mode = 'valid')            # this line creates the rolling average line data, but it is missing the first 20 data points
+        upline = np.concatenate(( [np.mean(upper[:self.window-1])] * (self.window-1), upline))    # to fill the first 20 data points, I just take the average of the first points and concatenate it to the beginning of the rolling average data set
 
-        plt.plot(time, upper, '.', color = 'cornflowerblue', markersize = '3', label = 'upper value') 
-        plt.plot(time, lower, '.', color = 'lightcoral', markersize = '3', label = 'lower value', zorder = 0)
+        lowline = np.convolve(lower, np.ones(self.window)/self.window, mode = 'valid')             #same thing for the lower line
+        lowline = np.concatenate(([np.mean(lower[:self.window-1])] * (self.window-1), lowline))
 
-        plt.xticks(ticks = tix, labels = self.dailyTitles, visible = False)
-        plt.gca().set_xticks(ticks = tix + len(upper)/14, minor = True)
-        plt.gca().set_xticklabels(self.dailyTitles, minor=True)
-        plt.tick_params(axis = 'x', which = 'minor', size = 0) #test comment
+        plt.plot(time, upline, color = self.main_color1, linewidth = '2')                      #plots the lines on the graph
+        plt.plot(time, lowline, color = self.second_color1, linewidth = '2')
+        #---------------------------------------
+        #MAKING GRAPH LOOK PRETTY
 
-        plt.ylabel('Power (kW)', size = 12)
-        plt.xlabel('Day of Week', size = 12)
-        plt.gca().yaxis.set_major_formatter(self.commas)
+        plt.fill_between(time, upper, upline, color = self.main_color1, alpha = 0.1)            #creats a transparent filler region between the rolling average line and actual data points
+        plt.fill_between(time, lower, lowline, color = self.second_color1, alpha = 0.1)
+        
+        plt.xticks(ticks = tix, labels = self.dailyTitles, visible = False)             #says there are 8 tick marks on the x axis, and it hides the labels because their labels are numbers and we dont want that
+        plt.gca().set_xticks(ticks = tix + len(upper)/14, minor = True)                 # creates minor tick marks in the middle of each major tick mark.
+        plt.gca().set_xticklabels(self.dailyTitles, minor=True)                         # labels each minor tick mark by the day of the week
+        plt.tick_params(axis = 'x', which = 'minor', size = 0)                          # makes the minor tick marks invisible by shrinking them to oblivion
+
+        plt.ylabel('Power (kW)', size = 12)                                         # y axis title and font
+        plt.xlabel('Day of Week', size = 12)                                        # x axis title and font
+        plt.gca().yaxis.set_major_formatter(self.commas)                                 # creates commas for numbers in the y axis
         plt.grid()
-
+        
         plt.savefig('Max_Min_kW_By_Day_of_Week.png')
 
     def Graph_MonthlyKwUsageByTimeOfDay(self):
+        """
+            This method creates a graph for each month that is in the data provided. 
+            Each graph shows the kW profile for each day of the week in that month, blue is weekdays and red is weekends
+            X axis is by time, 00:00 to 23:59
+            
+            Args:
+                self (<Grapher>): itself
+            
+            Returns:
+                png: returns the graph as a png image
+        """
+
+        #------------------------------------------------
+        #CREATING DATAFRAMES FOR THE WEEKENDS AND WEEKDAYS
+        
         day_of_week = []
         time = []
         kW = []
         month = []
-        for d, t, k, m in zip(self.dailyProfileDF['Day of Week'], self.dailyProfileDF['Time'], self.dailyProfileDF['kW'], self.dailyProfileDF['Month']):
+        for d, t, k, m in zip(self.dailyProfileDF['Day of Week'], self.dailyProfileDF['Time'], self.dailyProfileDF['kW'], self.dailyProfileDF['Month']):  #creates dataframe for weekends
             if d == 6 or d == 7:
                 day_of_week.append(d)
                 time.append(t)
@@ -262,12 +295,12 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
         wknd['kW'] = kW
         wknd['month'] = month
 
-
+        
         day_of_week = []
         time = []
         kW = []
         month = []
-        for d, t, k, m in zip(self.dailyProfileDF['Day of Week'], self.dailyProfileDF['Time'], self.dailyProfileDF['kW'], self.dailyProfileDF['Month']):
+        for d, t, k, m in zip(self.dailyProfileDF['Day of Week'], self.dailyProfileDF['Time'], self.dailyProfileDF['kW'], self.dailyProfileDF['Month']):  #creates dataframe for weekdays
             if d != 6 and d != 7:
                 day_of_week.append(d)
                 time.append(t)
@@ -280,9 +313,10 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
         wkdy['kW'] = kW
         wkdy['month'] = month
 
-        wkdy = wkdy.sort_values(['month', 'time'])
+        wkdy = wkdy.sort_values(['month', 'time'])   #sorting the new dataframes by month, and then by time of day
         wknd = wknd.sort_values(['month', 'time'])
         #----------------------------------------------------------------------------
+        #PLOTTING DATA
 
         fig, axes = plt.subplots(nrows = 3, ncols = 4, figsize = (10, 6))   #creating 12 subplots
         plt.subplots_adjust(wspace=0.5, hspace=1.0)                         #spacing out the subplots
@@ -291,13 +325,13 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
             subset_wkdy = wkdy[wkdy['month'] == i + 1]    #separating the data frames into months
             subset_wknd = wknd[wknd['month'] == i + 1]      
 
-            ax.plot(np.linspace(0, 24, len(subset_wknd)), (subset_wknd['kW']), ',', color = 'firebrick', label = 'weekend')
-            ax.plot(np.linspace(0, 24, len(subset_wkdy)), (subset_wkdy['kW']), ',', color = 'tab:blue', label = 'weekday')     #plotting data
+            ax.plot(np.linspace(0, 24, len(subset_wknd)), (subset_wknd['kW']), ',', color = self.second_color1, label = 'weekend')
+            ax.plot(np.linspace(0, 24, len(subset_wkdy)), (subset_wkdy['kW']), ',', color = self.main_color1, label = 'weekday')     #plotting data
 
 
             ax.set_xticks(ticks = np.linspace(0, 24, 5))  #x axis goes from 0 to 24, with 5 tickmarks
             ax.set_xticklabels(self.Ip[::6],  rotation = 45)
-            ax.set_yticks(ticks = np.linspace(0, np.ceil(np.max(self.dailyProfileDF['kW'])/100)*100 + 100, 5))   #y axis goes from 0 to the max(rounded up to the next hundred) with 5 tickmarks
+            ax.set_yticks(ticks = np.linspace(self.ylow, self.yhigh, 5)) # sets the bounds of the y axis, ylow & yhigh were determined earlier in "miscellaneous parameters"         
             ax.set_title(self.setMonthTitles[i])          #naming the subplots 
             ax.tick_params(labelsize = 8)          #making the font size for the axis smaller
             if i % 4 == 0:                         #check if it's the leftmost subplot in each row
@@ -306,14 +340,26 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
             ax.yaxis.set_major_formatter(self.commas)   #add commas to the y axis
     
     
-        legend_handles = [plt.Line2D([], [], marker='s', markersize=4, linestyle='None', label='Weekday', color = 'tab:blue'),
-                          plt.Line2D([], [], marker='s', markersize=4, linestyle='None', label='Weekend', color = 'firebrick')]
+        legend_handles = [plt.Line2D([], [], marker='s', markersize=4, linestyle='None', label='Weekday', color = self.main_color1),
+                          plt.Line2D([], [], marker='s', markersize=4, linestyle='None', label='Weekend', color = self.second_color1)]     #this part lets you modify the legend, it is set to having squares as the markers.
 
         fig.legend(handles=legend_handles)
 
-        plt.savefig('Monthly_kW_by_Time_of_Day.png')     #saves a figure into the same folder as this ipynb
+        plt.savefig('Monthly_kW_by_Time_of_Day.png')     #saves a figure into the same folder as this code
 
     def Graph_MonthlyKwUsageByDayOfWeek(self):
+         
+        """
+            This method creates a 12 graphs that shows the kW usage throughout the month, sorted by the days of the week.
+            X axis is each day of the week. Example: it takes all of the 15-min kW values from each Tuesday for the whole month and plots it,
+            And it does that for each day of the week, for each month.
+            
+            Args:
+                self (<Grapher>): itself
+            
+            Returns:
+                png: returns the graph as a png image
+       """
         self.dailyProfileDF = self.dailyProfileDF.sort_values(['Month', 'Day of Week'])   #sorting the entire dataframe by month and then day of the week
         self.dailyProfileDF['x'] = np.arange(len(self.dailyProfileDF))                    #creating a new column that assigns a number to each row in this new order
 
@@ -324,7 +370,7 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
 
         for i, ax, in enumerate(axes.flatten()):
             subset = self.dailyProfileDF[self.dailyProfileDF['Month'] == i + 1]        #splitting the data into 12 subsets
-            ax.plot(subset['x'], subset['kW'], '-', color = 'tab:blue')   #plotting each subset into it's respective subplot
+            ax.plot(subset['x'], subset['kW'], '-', color = self.main_color1)   #plotting each subset into it's respective subplot
 
 
             tix = np.linspace(np.min(subset['x']), np.max(subset['x']), 8)
@@ -347,40 +393,70 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
         plt.savefig('Monthly_kW_by_Day_of_Week.png')   #saves a figure into the same folder as this ipynb
 
     def Graph_HistogramOfPeaksByTimeOfDay(self):
+        """
+            This method creates a histogram that shows at what time of day the kW peaks are happening.
+            
+            Args:
+                self (<Grapher>): itself
+            
+            Returns:
+                png: returns the graph as a png image
+        """
         #-----------------------------------------------
+        #EXCLUDING OUTLIERS
         MaxTime = []
-        for u,t in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MaxTime"]):
+        for u,t in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MaxTime"]):     #if you want to exclude days that have an upper kW output less than the mean * cutoff_factor, then run this section of code
             if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
                 MaxTime.append(t)
         #-----------------------------------------------
-
-        hours = [time.hour for time in MaxTime]
-        tix = np.linspace(0, 23, 13)
-
+        #PLOTTING THE DATA
+        hours = [time.hour for time in MaxTime]     #creating a list of what times the max kW peak for each day is happening
+        
         plt.figure(figsize=(8, 4))
-        plt.hist(hours, bins = 24, range = (0, 23), rwidth = 0.8, color = 'tab:blue')
-        plt.gca().set_axisbelow(True)
-        plt.grid(axis = 'y')
+        plt.hist(hours, bins = 24, range = (0, 23), rwidth = 0.8, color = self.main_color1)  #plotting the data
+        
+        #----------------------------------------------
+        #MAKING IT LOOK PRETTY
 
-        plt.xticks(ticks = tix, labels = self.Ip[::2], rotation = 40, size = 10)
-        plt.xlabel('Time of Day', size = 12)
+        plt.gca().set_axisbelow(True)                                        #required to run below formatting code
+        plt.grid(axis = 'y')                                                 #setting only horizontal grid lines
+        tix = np.linspace(0, 23, 13)                                              #setting up tickmarks on the x axis
+        plt.xticks(ticks = tix, labels = self.Ip[::2], rotation = 40, size = 10)  #formatting the time values on the x axis
+        plt.xlabel('Time of Day', size = 12)                                      #labeling x and y axis
         plt.ylabel('Frequency of Peaks', size = 12)
 
         plt.savefig('Peak_Frequency_by_Time_of_Day.png')
 
     def Graph_HistogramOfPeaksByKwValues(self):
+        """
+            This method creates a histogram that how frequent certain peak values are.
+            Example: 100 days of the year the peak kW was between 0-10, 150 days of the year the peak kW was between 40-50, etc.
+            
+            Args:
+                self (<Grapher>): itself
+            
+            Returns:
+                png: returns the graph as a png image
+        """
         #if you want to exclude days that have an upper kW output less than the mean * cutoff_factor, then run this section of code
         #-----------------------------------------------
+        #EXCLUDING OUTLIERS
         MaxValue = []
         for u in self.maxMinDF["MaxValue"]:
             if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
                 MaxValue.append(u)
         # -----------------------------------------------
+        #PLOTTING THE DATA
 
-        high = np.ceil(np.max(MaxValue)/1000)*1000
+        mag = 10**np.floor(np.log10(np.mean(MaxValue) )) #finds the magnitude of the peak values
+
+        high_peak = np.ceil(np.max(MaxValue)/mag)*mag   #finds what the upper bound will be depending on the highest peak value
+        low_peak = np.floor(np.min(MaxValue)/mag)*mag   #finds what the lower bound will be depending on the lowest peak value
 
         plt.figure(figsize=(8, 4))
-        plt.hist(MaxValue, bins = int(high/100), rwidth = 0.8, range = (0, high), color = 'firebrick')
+        plt.hist(MaxValue, bins = int(high_peak/mag), rwidth = 0.8, range = (low_peak, high_peak), color = self.second_color1)
+        #-------------------------------------------------
+        #MAKING IT PRETTY
 
         plt.gca().xaxis.set_major_formatter(self.commas)
         plt.gca().set_axisbelow(True)
@@ -392,36 +468,47 @@ plt.plot(time, lowline, color = second_color1, linewidth = '2')
         plt.savefig('Peak_Frequency_by_Peak_Value.png')
 
     def Graph_MonthlyKwPeakProfile(self):
+        """
+            This method creates a graph that shows the demand profile 3 hours before and after the peak value for each month.
+            This allows us to see if the facility has a constant process, of if it was a fluke if there was a random spike.
+            
+            Args:
+                self (<Grapher>): itself
+            
+            Returns:
+                png: returns the graph as a png image
+        """
         rng = 60/self.timeInterval*3 #amount of datapoints for 3 hours before/after the max
 
         fig, axes = plt.subplots(nrows = 4, ncols = 3, figsize=(10, 8))  #creating 12 subplots
-        plt.subplots_adjust(wspace=0.6, hspace=1.0) 
+        plt.subplots_adjust(wspace=0.6, hspace=1.0)                      #spacing the subplots
 
-        lower = []
+        lower = []                #empty list, and creating a counter 'n'
         n = 0
-        for i, ax in zip(self.whichMonths, axes.flatten()):
-            idxmax = self.desiredTable.loc[self.desiredTable['Date/Time'].dt.month == i,  'Power (kW)'].idxmax()
-            subset = self.desiredTable.loc[idxmax-rng:idxmax+rng]
-            high = subset['Power (kW)'].max()
-            low = subset['Power (kW)'].min()
-            lower.append(low) 
+        for i, ax in zip(self.whichMonths, axes.flatten()):                                                       #this runs through each month
+            idxmax = self.desiredTable.loc[self.desiredTable['Date/Time'].dt.month == i,  'Power (kW)'].idxmax()  #idxmax is looking at all the data points in the month, and finding the location of max kW
+            subset = self.desiredTable.loc[idxmax-rng:idxmax+rng]                                                 #subset is the actual set of datapoints before/after the max
+            high = subset['Power (kW)'].max()                                  #the value of the max
+            low = subset['Power (kW)'].min()                                   #the value of the min, within 3 hours before/after the max
+            lower.append(low)                                                  #saving the low values for each month into a list
 
-            tix = subset['Date/Time'].dt.strftime('%I:%M %p')
-            title = subset['Date/Time'].dt.strftime('%b %d')
+            tix = subset['Date/Time'].dt.strftime('%I:%M %p')            #formats the time on the x axis
+            title = subset['Date/Time'].dt.strftime('%b %d')             #formats the title of each subplot
     
-            ax.plot(tix, subset['Power (kW)'])
-            ax.plot(rng, high, '.', color = 'firebrick')
-            ax.annotate(f'{int(high):,}', xy=(rng, high), xytext=(74, -2.5), textcoords='offset points', arrowprops=dict(arrowstyle='-', color = 'firebrick'), color = 'firebrick', size = 8)
+    
+            ax.plot(tix, subset['Power (kW)'])                       #actually plots the subplot
+            ax.plot(rng, high, '.', color = self.second_color1)       #creates a point where the peak happened
+            ax.annotate(f'{int(high):,}', xy=(rng, high), xytext=(74, -2.5), textcoords='offset points', arrowprops=dict(arrowstyle='-', color = self.second_color1), color = self.second_color1, size = 8)   #creates an arrow pointing to the peak point and labels it with the peak value
 
             ax.set_xticks(tix[::int(60/self.timeInterval)])
-            ax.set_yticks(ticks = np.linspace(np.floor(np.min(lower)/100-1)*100, np.ceil(np.max(self.desiredTable['Power (kW)'])/100+1)*100, 3))   #y axis goes from 0 to the max(rounded up to the next hundred) with 5 tickmarks
-            ax.set_title(title.max())          #naming the subplots 
+            ax.set_yticks(ticks = np.linspace(self.ylow, self.yhigh, 3))   # sets the bounds of the y axis, ylow & yhigh were determined earlier based on the magnitude of the dataset
+            ax.set_title(title.max())                                       #naming the subplots 
             ax.tick_params(axis = 'x', labelsize = 6, rotation = 55)          #making the font size for the axis smaller
 
-            if (n) % 3 == 0:                         #check if it's the leftmost subplot in each row
+            if (n) % 3 == 0:                                          #check if it's the leftmost subplot in each row
                 ax.set_ylabel('Power (kW)', size = 10)                #y-axis label for the leftmost subplot
-            ax.grid()                              #grid
-            ax.yaxis.set_major_formatter(self.commas)   #add commas to the y axis
+            ax.grid()                                                 #grid
+            ax.yaxis.set_major_formatter(self.commas)                 #add commas to the y axis
             n += 1
     
         plt.savefig('Monthly_Peak_Profile.png')
