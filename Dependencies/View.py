@@ -14,7 +14,6 @@ class View:
         app.geometry("1000x1000")
         app.iconbitmap("ico.ico")
         app.grid_columnconfigure(2, weight=1)
-
     
     def createStartPage(self):
         titlePageFrame = tk.CTkFrame(self.app)
@@ -36,8 +35,6 @@ class View:
         self.uploadPageFrame = uploadPageFrame
         rowRangeFrame = tk.CTkFrame(uploadPageFrame)
         rowRangeFrame.grid(row=3, column=2, padx=20, pady=(10, 0))
-        dateFormatFrame = tk.CTkFrame(uploadPageFrame)
-        dateFormatFrame.grid(row=7, column=2, padx=20, pady=(2, 0))
 
         # Remove TitlePage Frame
         self.titlePageFrame.grid_remove()
@@ -72,31 +69,6 @@ class View:
         endRowNumEntry.grid(row=4, column=4, padx=10, pady=0)
         self.endRowNumEntry = endRowNumEntry
 
-        # Section where we prompt the user the format of how the date is recorded (Ex: MM/DD/YYYY)
-        dateFormatLabel = tk.CTkLabel(uploadPageFrame,text=f"Indicate the format at which the Dates are shown in the data sheet using (Ex: MM/DD/YYYY)",)
-        dateFormatLabel.configure(font=("Eras Medium ITC", 15), anchor="center", pady=20, padx=30)
-        dateFormatLabel.grid(row=6, column=2, padx=10, pady=8)
-
-        dateFormatOneEntry = tk.CTkEntry(dateFormatFrame)
-        dateFormatOneEntry.grid(row=7, column=1, padx=10, pady=0)
-        self.dateFormatOneEntry = dateFormatOneEntry
-        
-        dashOneLabel = tk.CTkLabel(dateFormatFrame, text="/")
-        dashOneLabel.configure(font=("Eras Medium ITC", 15), anchor="center", pady=20, padx=30)
-        dashOneLabel.grid(row=7, column=2, padx=6, pady=0)
-
-        dateFormatTwoEntry = tk.CTkEntry(dateFormatFrame)
-        dateFormatTwoEntry.grid(row=7, column=3, padx=10, pady=0)
-        self.dateFormatTwoEntry = dateFormatTwoEntry
-
-        dashTwoLabel = tk.CTkLabel(dateFormatFrame, text="/")
-        dashTwoLabel.configure(font=("Eras Medium ITC", 15), anchor="center", pady=20, padx=30)
-        dashTwoLabel.grid(row=7, column=4, padx=6, pady=0)
-
-        dateFormatThreeEntry = tk.CTkEntry(dateFormatFrame)
-        dateFormatThreeEntry.grid(row=7, column=5, padx=10, pady=0)
-        self.dateFormatThreeEntry = dateFormatThreeEntry
-
         # Section where we check if the date and timestamps are combined or not
         check_var = tk.StringVar(value="on")
         CheckBox_DateTimeCheck = tk.CTkCheckBox(
@@ -123,19 +95,10 @@ class View:
     def checkEntryFormat(self):
         FormatChecker = 1
         InvalidRowChecker = 1
-        DuplicateChecker = 1
 
-        ValidFormats = ["M", "D", "DD", "MM", "YYYY"]
-        Date_Entries = [self.dateFormatOneEntry, self.dateFormatTwoEntry, self.dateFormatThreeEntry]
         labels_row = self.Int32TryParse(self.startRowNumEntry.get())
         end_row = self.Int32TryParse(self.endRowNumEntry.get())
         Row_Entries = [self.startRowNumEntry, self.endRowNumEntry]
-
-
-        # Invalid Entry Checking
-        for Entry in Date_Entries:
-            if Entry.get().upper() not in ValidFormats:
-                FormatChecker = self.FormatCheckingOnEntries(Entry)
 
         for Row in Row_Entries:
             if self.Int32TryParse(Row.get()) == None:
@@ -149,23 +112,11 @@ class View:
                     f"Labels' Row '{end_row}' is smaller than or equal to Ending Row '{labels_row}'."
                 )
                 InvalidRowChecker = -1
-        
-         # Check for duplicates in Date_Entries
-        DuplicateChecker = self.CheckForDuplicateEntries()
 
          # Open file if everything looks like it follows the desired format
-        if FormatChecker == 1 and InvalidRowChecker == 1 and DuplicateChecker == 1:
+        if FormatChecker == 1 and InvalidRowChecker == 1:
             return 1
         return -1
-     
-    def CheckForDuplicateEntries(self):
-         dateEntries = [self.dateFormatOneEntry, self.dateFormatTwoEntry, self.dateFormatThreeEntry]
-         for i in range(len(dateEntries)):
-             for j in range(i + 1, len(dateEntries)):
-                 if dateEntries[i].get().upper().__contains__(dateEntries[j].get().upper()):
-                     self.displayPopUpMessage(f"Duplicates have been found at Entry {i + 1} and {j + 1}")
-                     return -1
-         return 1    
 
     def FormatCheckingOnEntries(self, this):
         this.delete(0, len(this.get()))

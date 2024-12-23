@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
 class DataAnalyzer:
     def dailyProfile(desiredTable):
         powerTitle = "Power (kW)"
