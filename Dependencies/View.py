@@ -12,7 +12,7 @@ class View:
         self.controller = controler
         app.title("Data Analysis Tool")
         app.geometry("1000x1000")
-        app.iconbitmap("ico.ico")
+        ## app.iconbitmap("ico.ico")
         app.grid_columnconfigure(2, weight=1)
     
     def createStartPage(self):
