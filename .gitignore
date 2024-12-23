@@ -4,3 +4,12 @@
 
 /.vs
 /Dependencies/__pycache__
+/DailyMaxMin.xlsx
+/DailyProfile.xlsx
+/Max_Min_kW_By_Day_of_Week.png
+/Monthly_kW_by_Day_of_Week.png
+/Monthly_kW_by_Time_of_Day.png
+/Monthly_Peak_Profile.png
+/NormalizedIntervalData.xlsx
+/Peak_Frequency_by_Peak_Value.png
+/Peak_Frequency_by_Time_of_Day.png

@@ -13,7 +13,6 @@ class Grapher:
         self.monthNum = len(self.whichMonths) #How many different months there are
         self.timeInterval = (desiredTable['Date/Time'][1] - desiredTable['Date/Time'][0]).total_seconds()/60 # difference between timestamps in minutes
 
-
         """
         Note: When Thomas and I presented this, I received some feedback to fix the y axis bounds, 
         and to involve a rolling average line instead of a line of best fit. I updated my code in 
@@ -214,12 +213,12 @@ class Grapher:
 
         if np.std(self.maxMinDF['MaxValue']) >= np.std(self.maxMinDF['MinValue']):             #the if and else will select which set (MaxValue or MinValue) has a higher standard deviation. Then it will plot the data based on which one has the higher std, this is because of the cutoff factor. If the cutoff factor is active, then I want to create the upper/lower based on the one with more outliers
             for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):              #this goes through the data sets and find the min/max value and puts them in a new array named upper / lower
-                if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoff_factor:
+                if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
                     upper.append(u)
                     lower.append(l)
         else:
             for u,l in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MinValue"]):
-                if l >= np.mean(self.maxMinDF['MinValue'])*self.cutoff_factor:
+                if l >= np.mean(self.maxMinDF['MinValue'])*self.cutoffFactor:
                     upper.append(u)
                     lower.append(l)
 
@@ -405,7 +404,7 @@ class Grapher:
         #-----------------------------------------------
         #EXCLUDING OUTLIERS
         MaxTime = []
-        for u,t in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MaxTime"]):     #if you want to exclude days that have an upper kW output less than the mean * cutoff_factor, then run this section of code
+        for u,t in zip(self.maxMinDF["MaxValue"],self.maxMinDF["MaxTime"]):     #if you want to exclude days that have an upper kW output less than the mean * cutoffFactor, then run this section of code
             if u >= np.mean(self.maxMinDF['MaxValue'])*self.cutoffFactor:
                 MaxTime.append(t)
         #-----------------------------------------------
@@ -438,7 +437,7 @@ class Grapher:
             Returns:
                 png: returns the graph as a png image
         """
-        #if you want to exclude days that have an upper kW output less than the mean * cutoff_factor, then run this section of code
+        #if you want to exclude days that have an upper kW output less than the mean * cutoffFactor, then run this section of code
         #-----------------------------------------------
         #EXCLUDING OUTLIERS
         MaxValue = []
